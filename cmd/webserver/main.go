@@ -1,13 +1,20 @@
 package main
 
 import (
-	"fmt"
+	"log"
 
 	"brianhang.me/facegraph/internal/db"
+	"brianhang.me/facegraph/internal/routes"
 )
 
 func main() {
-	db.Init()
+	err := db.Init()
+	if err != nil {
+		log.Fatalf("Failed to initialize the database: %v", err)
+	}
 
-	fmt.Println("Hello world!")
+	err = routes.Init()
+	if err != nil {
+		log.Fatalf("Failed to initialize routes: %v", err)
+	}
 }
