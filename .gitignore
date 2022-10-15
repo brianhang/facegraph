@@ -19,3 +19,6 @@ bin/
 
 # Go workspace file
 go.work
+
+# SQLite
+app.db

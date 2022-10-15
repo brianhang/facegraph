@@ -1,7 +1,13 @@
 package main
 
-import "fmt"
+import (
+	"fmt"
+
+	"brianhang.me/facegraph/internal/db"
+)
 
 func main() {
+	db.Init()
+
 	fmt.Println("Hello world!")
 }
