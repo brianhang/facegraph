@@ -4,33 +4,15 @@ import (
 	"fmt"
 	"log"
 	"net/http"
-	"net/url"
 	"os"
 	"strconv"
 
+	"brianhang.me/facegraph/internal/appurl"
 	"brianhang.me/facegraph/internal/oauth"
 	oauthgoogle "brianhang.me/facegraph/internal/oauth/google"
 )
 
 var isSecure bool
-var baseURL *url.URL
-
-func getBaseURL() *url.URL {
-	if baseURL != nil {
-		return baseURL
-	}
-
-	rawURL := os.Getenv("WEBSERVER_BASE_URL")
-	baseURL, err := url.Parse(rawURL)
-	if err != nil {
-		log.Fatalf("The WEBSERVER_BASE_URL environment variable is not a valid URL: %v", err)
-	}
-	return baseURL
-}
-
-func getURLForPath(path string) *url.URL {
-	return getBaseURL().JoinPath(path)
-}
 
 func setupRoutes() error {
 	http.HandleFunc("/", handleHome)
@@ -38,7 +20,7 @@ func setupRoutes() error {
 	googleOAuth := &oauthgoogle.Strategy{}
 	err := oauth.SetupRoutesForStrategy(
 		googleOAuth,
-		getURLForPath("/auth/google"),
+		appurl.ForPath("/auth/google"),
 		internalErrorResponse,
 	)
 	if err != nil {
