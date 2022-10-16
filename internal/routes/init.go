@@ -7,6 +7,7 @@ import (
 	"os"
 	"strconv"
 
+	"brianhang.me/facegraph/internal/api"
 	"brianhang.me/facegraph/internal/appurl"
 	"brianhang.me/facegraph/internal/oauth"
 	oauthgoogle "brianhang.me/facegraph/internal/oauth/google"
@@ -21,7 +22,7 @@ func setupRoutes() error {
 	err := oauth.SetupRoutesForStrategy(
 		googleOAuth,
 		appurl.ForPath("/auth/google"),
-		internalErrorResponse,
+		api.InternalErrorResponse,
 	)
 	if err != nil {
 		return fmt.Errorf("failed to set up routes: %v", err)

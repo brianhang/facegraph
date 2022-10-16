@@ -1,4 +1,4 @@
-package routes
+package api
 
 import (
 	"encoding/json"
@@ -11,7 +11,7 @@ type errorResponse struct {
 	Message string `json:"error_message"`
 }
 
-func internalErrorResponse(w http.ResponseWriter, r *http.Request, err error) {
+func InternalErrorResponse(w http.ResponseWriter, r *http.Request, err error) {
 	dump, _ := httputil.DumpRequest(r, true)
 	log.Printf("Request has failed: %v\n\nRequest Dump:\n%s", err, dump)
 
