@@ -2,7 +2,6 @@ package oauthgoogle
 
 import (
 	"io"
-	"log"
 	"net/http"
 	"net/url"
 	"strings"
@@ -42,8 +41,6 @@ func (s *Strategy) HandleAuthenticationCallback(redirectURL *url.URL, w http.Res
 	if err != nil {
 		return err
 	}
-
-	log.Printf("Sending to %s\n", endpoint)
 
 	q, _ := url.ParseQuery("")
 	q.Set("code", code)
