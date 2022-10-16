@@ -16,7 +16,8 @@ import (
 var isSecure bool
 
 func setupRoutes() error {
-	http.HandleFunc("/", handleHome)
+	fs := http.FileServer(http.Dir("./web/static"))
+	http.Handle("/", fs)
 
 	googleOAuth := &oauthgoogle.Strategy{}
 	err := oauth.SetupRoutesForStrategy(
