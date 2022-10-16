@@ -3,6 +3,8 @@ module brianhang.me/facegraph
 go 1.19
 
 require (
+	github.com/MicahParks/keyfunc v1.5.1
+	github.com/golang-jwt/jwt/v4 v4.4.2
 	gorm.io/driver/sqlite v1.4.2
 	gorm.io/gorm v1.24.0
 )

@@ -2,6 +2,7 @@ package routes
 
 import (
 	"fmt"
+	"io"
 	"log"
 	"net/http"
 	"os"
@@ -23,6 +24,10 @@ func setupRoutes() error {
 	err := oauth.SetupRoutesForStrategy(
 		googleOAuth,
 		appurl.ForPath("/auth/google"),
+		func(w http.ResponseWriter, r *http.Request, externalUserID string) error {
+			io.WriteString(w, fmt.Sprintf("Your Google ID is %s", externalUserID))
+			return nil
+		},
 		api.InternalErrorResponse,
 	)
 	if err != nil {

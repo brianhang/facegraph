@@ -1,13 +1,30 @@
 package oauthgoogle
 
 import (
+	"encoding/json"
+	"fmt"
 	"io"
 	"net/http"
 	"net/url"
 	"strings"
+
+	"brianhang.me/facegraph/internal/oauth"
+	"github.com/golang-jwt/jwt/v4"
 )
 
 type Strategy struct{}
+
+type tokenResponse struct {
+	AccessToken string `json:"access_token"`
+	ExpiresIn   int    `json:"expires_in"`
+	Scope       string `json:"scope"`
+	TokenType   string `json:"token_type"`
+	IDToken     string `json:"id_token"`
+}
+
+type googleClaims struct {
+	jwt.StandardClaims
+}
 
 func (s *Strategy) GetAuthenticationURL(redirectURL *url.URL) (*url.URL, error) {
 	endpoint, err := fetchAuthorizationEndpoint()
@@ -30,7 +47,12 @@ func (s *Strategy) GetAuthenticationURL(redirectURL *url.URL) (*url.URL, error) 
 	return authURL, nil
 }
 
-func (s *Strategy) HandleAuthenticationCallback(redirectURL *url.URL, w http.ResponseWriter, r *http.Request) error {
+func (s *Strategy) HandleAuthenticationCallback(
+	redirectURL *url.URL,
+	w http.ResponseWriter,
+	r *http.Request,
+	handleAuthenticated oauth.AuthenticatedHandler,
+) error {
 	_, err := io.ReadAll(r.Body)
 	if err != nil {
 		return err
@@ -58,6 +80,44 @@ func (s *Strategy) HandleAuthenticationCallback(redirectURL *url.URL, w http.Res
 		return err
 	}
 
-	io.WriteString(w, string(content))
+	tokenRes := tokenResponse{}
+	if err = json.Unmarshal(content, &tokenRes); err != nil {
+		return fmt.Errorf("failed to parse token response (%s): %v", content, err)
+	}
+
+	claims, err := fetchClaimsFromJWT(tokenRes.IDToken)
+	if err != nil {
+		return fmt.Errorf("failed to parse JWT (%s): %v", tokenRes.IDToken, err)
+	}
+
+	err = handleAuthenticated(w, r, claims.Subject)
+	if err != nil {
+		return err
+	}
+
 	return nil
+}
+
+func fetchClaimsFromJWT(token string) (googleClaims, error) {
+	claims := googleClaims{}
+	jwksURL, err := fetchJWKSURI()
+	if err != nil {
+		return claims, fmt.Errorf("failed to fetch JWKS URL: %v", err)
+	}
+
+	jwks, err := oauth.FetchJWKS(jwksURL)
+	if err != nil {
+		return claims, fmt.Errorf("failed to fetch JWKS: %v", err)
+	}
+
+	parsed, err := jwt.ParseWithClaims(
+		token,
+		&claims,
+		jwks.Keyfunc,
+	)
+	if err != nil || !parsed.Valid {
+		return claims, fmt.Errorf("failed to parse JWT (%s): %v", token, err)
+	}
+
+	return claims, nil
 }

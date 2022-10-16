@@ -7,14 +7,26 @@ import (
 	"strings"
 )
 
+type AuthenticatedHandler func(w http.ResponseWriter, r *http.Request, externalUserID string) error
+
 type Strategy interface {
 	GetAuthenticationURL(redirectURL *url.URL) (*url.URL, error)
-	HandleAuthenticationCallback(redirectURL *url.URL, w http.ResponseWriter, r *http.Request) error
+	HandleAuthenticationCallback(
+		redirectURL *url.URL,
+		w http.ResponseWriter,
+		r *http.Request,
+		handleAuthenticated AuthenticatedHandler,
+	) error
 }
 
 type errorHandler func(w http.ResponseWriter, r *http.Request, err error)
 
-func SetupRoutesForStrategy(strategy Strategy, baseURL *url.URL, handleError errorHandler) error {
+func SetupRoutesForStrategy(
+	strategy Strategy,
+	baseURL *url.URL,
+	handleAuthenticated AuthenticatedHandler,
+	handleError errorHandler,
+) error {
 	path := pathWithSlashes(baseURL.Path)
 	callbackURL := baseURL.JoinPath("callback")
 	callbackPath := pathWithSlashes(callbackURL.Path)
@@ -31,7 +43,7 @@ func SetupRoutesForStrategy(strategy Strategy, baseURL *url.URL, handleError err
 	log.Printf("Setting up Google authentication at %s\n", path)
 
 	http.HandleFunc(callbackPath, func(w http.ResponseWriter, r *http.Request) {
-		err := strategy.HandleAuthenticationCallback(callbackURL, w, r)
+		err := strategy.HandleAuthenticationCallback(callbackURL, w, r, handleAuthenticated)
 		if err != nil {
 			handleError(w, r, err)
 		}

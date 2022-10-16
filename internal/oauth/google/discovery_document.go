@@ -12,6 +12,7 @@ const DISCOVERY_DOCUMENT_URL = "https://accounts.google.com/.well-known/openid-c
 type discoveryDocument struct {
 	AuthorizationEndpoint string `json:"authorization_endpoint"`
 	TokenEndpoint         string `json:"token_endpoint"`
+	JWKSURI               string `json:"jwks_uri"`
 }
 
 var lastDiscoveryDocument *discoveryDocument
@@ -30,6 +31,14 @@ func fetchTokenEndpoint() (string, error) {
 		return "", err
 	}
 	return document.TokenEndpoint, nil
+}
+
+func fetchJWKSURI() (string, error) {
+	document, err := fetchDiscoveryDocument()
+	if err != nil {
+		return "", err
+	}
+	return document.JWKSURI, nil
 }
 
 func fetchDiscoveryDocument() (*discoveryDocument, error) {
