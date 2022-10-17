@@ -10,7 +10,7 @@ import (
 
 var dbInstance *gorm.DB
 
-func Init() error {
+func Init() (*gorm.DB, error) {
 	dbFileName := os.Getenv("DB_FILE_NAME")
 	if dbFileName == "" {
 		dbFileName = "app.db"
@@ -22,7 +22,7 @@ func Init() error {
 
 	dbInstance = db
 
-	return err
+	return db, err
 }
 
 func Get() *gorm.DB {
