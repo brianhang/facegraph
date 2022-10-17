@@ -12,6 +12,7 @@ import (
 	"brianhang.me/facegraph/internal/appurl"
 	"brianhang.me/facegraph/internal/oauth"
 	oauthgoogle "brianhang.me/facegraph/internal/oauth/google"
+	"brianhang.me/facegraph/internal/user"
 )
 
 var isSecure bool
@@ -24,15 +25,29 @@ func setupRoutes() error {
 	err := oauth.SetupRoutesForStrategy(
 		googleOAuth,
 		appurl.ForPath("/auth/google"),
-		func(w http.ResponseWriter, r *http.Request, externalUserID string) error {
-			io.WriteString(w, fmt.Sprintf("Your Google ID is %s", externalUserID))
+		func(w http.ResponseWriter, r *http.Request, googleID string) error {
+			u := user.FindOrCreateFromGoogleID(googleID)
+			if err := user.SetCookie(w, &u); err != nil {
+				return err
+			}
 			return nil
 		},
 		api.InternalErrorResponse,
 	)
 	if err != nil {
-		return fmt.Errorf("failed to set up routes: %v", err)
+		return fmt.Errorf("failed to set up Google OAuth routes: %v", err)
 	}
+
+	http.HandleFunc(
+		"/api/user/",
+		user.RouteWithUser(func(w http.ResponseWriter, r *http.Request, u *user.User) {
+			if u != nil {
+				io.WriteString(w, fmt.Sprintf("Your user ID is %d", u.ID))
+			} else {
+				io.WriteString(w, "you are not logged in")
+			}
+		}),
+	)
 
 	return nil
 }
